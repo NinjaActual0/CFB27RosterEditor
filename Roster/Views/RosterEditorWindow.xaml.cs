@@ -139,6 +139,7 @@ public partial class RosterEditorWindow : Window
             SaveAsMenuItem.IsEnabled = true;
             BulkSwapMenuItem.IsEnabled = true;
             SummaryMenuItem.IsEnabled = true;
+            RoundTripTestMenuItem.IsEnabled = true;
             GenerateMenuItem.IsEnabled = true;
             LoadDefaultToneMapMenuItem.IsEnabled = true;
             LoadToneMapMenuItem.IsEnabled = true;
@@ -802,6 +803,88 @@ public partial class RosterEditorWindow : Window
                   $"Top 20 Equipment Items:\n  " + string.Join("\n  ", gearUsage);
 
         MessageBox.Show(this, msg, "Roster Summary", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void RoundTripTestMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentFilePath == null || _rosterData == null || _originalFileBytes == null)
+        {
+            MessageBox.Show(this, "Load a roster first.", "Round-Trip Test", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var writer = new CFB27RosterWriter();
+        var savedBytes = writer.BuildPayload(_rosterData, _originalFileBytes);
+
+        var savedCopyPath = Path.Combine(Path.GetTempPath(), "CFB27_RoundTrip_Saved");
+        var origCopyPath = Path.Combine(Path.GetTempPath(), "CFB27_RoundTrip_Original");
+        File.WriteAllBytes(savedCopyPath, savedBytes);
+        File.WriteAllBytes(origCopyPath, _originalFileBytes);
+
+        var lines = new List<string>();
+        lines.Add($"Original: {_originalFileBytes.Length} bytes");
+        lines.Add($"Saved:    {savedBytes.Length} bytes");
+
+        if (savedBytes.Length == _originalFileBytes.Length)
+        {
+            var match = savedBytes.AsSpan().SequenceEqual(_originalFileBytes);
+            lines.Add($"Byte-identical: {match}");
+            if (!match)
+            {
+                for (int i = 0; i < _originalFileBytes.Length; i++)
+                {
+                    if (savedBytes[i] != _originalFileBytes[i])
+                    {
+                        int ctx = Math.Min(16, _originalFileBytes.Length - i);
+                        lines.Add($"First diff at offset 0x{i:X}:");
+                        lines.Add($"  orig: {BitConverter.ToString(_originalFileBytes[i..(i+ctx)])}");
+                        lines.Add($"  save: {BitConverter.ToString(savedBytes[i..(i+ctx)])}");
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            lines.Add($"SIZE MISMATCH (diff={savedBytes.Length - _originalFileBytes.Length})");
+        }
+
+        lines.Add($"");
+        lines.Add($"Saved copy: {savedCopyPath}");
+        lines.Add($"Original copy: {origCopyPath}");
+
+        MessageBox.Show(this, string.Join("\n", lines), "Round-Trip Test", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void DebugDumpStringsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentPlayer?.RawRecordData == null)
+        {
+            MessageBox.Show(this, "Select a player first.", "Debug", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var raw = _currentPlayer.RawRecordData;
+        var hexDump = BitConverter.ToString(raw.Take(256).ToArray()).Replace("-", " ");
+        var strings = CFB27RosterReader.ExtractStrings(raw);
+        var lines = new List<string>
+        {
+            $"Record length: {raw.Length}",
+            $"Player: {_currentPlayer.FirstName} {_currentPlayer.LastName}",
+            $"Position: {_currentPlayer.Position ?? "(not parsed)"}",
+            $"Team: {_currentPlayer.Team}",
+            $"",
+            $"Extracted strings ({strings.Count}):"
+        };
+        for (var i = 0; i < strings.Count; i++)
+            lines.Add($"  [{i}] \"{strings[i]}\"");
+        lines.Add($"");
+        lines.Add($"First 256 bytes (hex):");
+        lines.Add(hexDump);
+
+        var dumpPath = Path.Combine(Path.GetTempPath(), "CFB27_DebugDump.txt");
+        File.WriteAllText(dumpPath, string.Join("\n", lines));
+        System.Diagnostics.Process.Start("notepad.exe", dumpPath);
     }
 
     private async void GenerateMenuItem_Click(object sender, RoutedEventArgs e)

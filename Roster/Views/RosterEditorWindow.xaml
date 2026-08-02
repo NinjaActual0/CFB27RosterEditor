@@ -38,6 +38,9 @@
                 <MenuItem x:Name="BulkSwapMenuItem" Header="_Bulk Swap Equipment..." Click="BulkSwapMenuItem_Click" IsEnabled="False"/>
                 <MenuItem x:Name="SummaryMenuItem" Header="_Roster Summary" Click="SummaryMenuItem_Click" IsEnabled="False"/>
             </MenuItem>
+            <MenuItem Header="_Debug">
+                <MenuItem x:Name="RoundTripTestMenuItem" Header="_Round-Trip Test (no-edit save)" Click="RoundTripTestMenuItem_Click" IsEnabled="False"/>
+            </MenuItem>
         </Menu>
 
         <Grid Grid.Row="1" Margin="0,8,0,0">
@@ -197,11 +200,14 @@
                     <Grid Grid.Row="11" Grid.ColumnSpan="4" Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Button x:Name="AssignFaceButton" Content="Assign Random Face" Padding="8,4"
                                 Click="AssignFaceButton_Click" Margin="0,0,8,0"/>
-                        <TextBlock x:Name="FaceCountText" Grid.Column="1" VerticalAlignment="Center" Foreground="Gray" FontSize="11"/>
+                        <Button x:Name="DebugDumpStringsButton" Content="Debug: Raw Strings" Padding="8,4"
+                                Click="DebugDumpStringsButton_Click" Margin="0,0,8,0" Grid.Column="1"/>
+                        <TextBlock x:Name="FaceCountText" Grid.Column="2" VerticalAlignment="Center" Foreground="Gray" FontSize="11"/>
                     </Grid>
                 </Grid>
             </Border>

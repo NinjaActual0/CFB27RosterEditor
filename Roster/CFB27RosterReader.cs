@@ -61,6 +61,18 @@ public class CFB27RosterReader
         if (c2Start > 0 && c2Start < deflateData.Length)
             result.C2TrailingData = deflateData[c2Start..];
 
+        // Parse FrTk tables from C2 trailing data to find Player table and position
+        if (result.C2TrailingData != null)
+        {
+            var tables = FranchiseTableParser.ScanTables(result.C2TrailingData);
+            var playerTable = FranchiseTableParser.FindTableByName(tables, "Player");
+            if (playerTable != null)
+            {
+                result.PlayerTable = playerTable;
+                result.PlayerFieldOffsets = playerTable.ReadRawOffsetTable();
+            }
+        }
+
         for (var i = 0; i < rawStreams.Count; i++)
         {
             var record = rawStreams[i];
@@ -80,6 +92,13 @@ public class CFB27RosterReader
                 {
                     player.RawRecordData = record;
                     player.StreamIndex = i;
+                    // If Player table was found and position wasn't set from visual strings, look it up
+                    if (string.IsNullOrEmpty(player.Position) || player.Position == "ATH")
+                    {
+                        var pos = result.GetPositionForPlayer(i);
+                        if (pos != null)
+                            player.Position = pos;
+                    }
                     result.Players.Add(player);
                 }
             }
@@ -282,9 +301,11 @@ public class CFB27RosterReader
 
         var player = new PlayerVisualRecipe();
 
-        for (var i = 0; i < strings.Count; i++)
+        var filtered = strings.Where(s => s != "Hn" && s != "Np").ToList();
+
+        for (var i = 0; i < filtered.Count; i++)
         {
-            var s = strings[i];
+            var s = filtered[i];
 
             if (i == 0)
                 player.FullId = s;

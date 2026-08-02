@@ -10,4 +10,19 @@ public class RosterData
     public byte[] ContainerHeader { get; set; }
     public byte[] FbChunksHeader { get; set; }
     public byte[] C2TrailingData { get; set; }
+
+    public FranchiseTable PlayerTable { get; set; }
+    public int[] PlayerFieldOffsets { get; set; }
+
+    public string GetPositionForPlayer(int streamIndex)
+    {
+        if (PlayerTable == null || PlayerFieldOffsets == null)
+            return null;
+        if (streamIndex < 0 || streamIndex >= PlayerTable.Header.NextRecordToUse)
+            return null;
+        var record = PlayerTable.GetRecordBytes(streamIndex);
+        var posBitOffset = PlayerFieldOffsets[119];
+        var posValue = RecordCodec.ReadBits(record, posBitOffset, 6);
+        return RecordCodec.DecodePosition(posValue);
+    }
 }
