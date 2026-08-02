@@ -42,6 +42,8 @@ community roster files.
 - **Round-Trip Test**: saves a file with zero edits and diffs it against the original, byte by
   byte, to validate the writer.
 - **Raw Strings dump**: hex + extracted strings for the selected player's record.
+- **`Tools/Tdb2Dump`**: console tool that extracts every player's position (and key ratings)
+  straight from the TDB2 `PLAY` subtable. Sample output in `SampleOutput/play_records.txt`.
 
 ---
 
@@ -50,26 +52,41 @@ community roster files.
 ### What works
 - Full decompression + gzip-stream split of roster files.
 - Player record parsing from embedded ASCII strings (name, team, body type, gear, height byte).
+- **TDB2 position extraction (SOLVED the position blocker).** Roster files use the TDB2
+  table format; the authoritative per-player records live in a `PLAY` subtable inside the
+  trailing binary data. The parser (`Roster/Tdb2.cs` + `Roster/Tdb2RosterExtractor.cs`)
+  decodes all **11,730** player records with 0 errors, including the `PPOS` → position map.
 - In-memory edits and the full editing UI.
 - Round-trip (no-edit save) is byte-identical.
 
+### Position encoding (TDB2 `PLAY` subtable)
+- Outer zlib/deflate at `0x4A` → inner buffer (14,264,525 B on the test roster).
+- Inner: `BLOB` table (type 3, 2 entries) → `BLBM` subtable (type 5, gzip per-player profile
+  records, 12,154 entries) → … → a **flat section** holding the real attribute data.
+- The flat section contains the **`PLAY` subtable** (type 4) — located by the packed key
+  `C2 C8 79 04` (inner offset 8,314,829 on the test roster), followed by 1 unknown byte and a
+  modified-LEB entry count. `PPOS` lives here, NOT inside the gzip profile records.
+- `PPOS` maps to the CFB27 21-position set (blank/0 = QB):
+
+  | code | pos | code | pos | code | pos | code | pos | code | pos |
+  |------|-----|------|-----|------|-----|------|-----|------|-----|
+  | 1  | HB  | 5  | LT  | 10 | LEDG | 14 | MIKE | 19 | K  |
+  | 2  | FB  | 6  | LG  | 11 | REDG | 15 | WILL | 20 | P  |
+  | 3  | WR  | 7  | C   | 12 | DT   | 16 | CB   |    |    |
+  | 4  | TE  | 8  | RG  | 13 | SAM  | 17 | FS   |    |    |
+  |    |     | 9  | RT  |    |      | 18 | SS   |    |    |
+
+- Verified against real players (Tyree Adams→LT, Adepoju Adebawore→REDG, Omillio Agard→CB,
+  Joenel Aguero→FS, Bear Alexander→DT, Steve Angeli→QB, Nyck Harbor/Jeremiah Smith→WR).
+
 ### What does NOT work yet
-1. **Position detection / editing is unreliable.**
-   Community roster files (e.g. `ROSTER-TEST2007`) **do not use the FrTk table format**
-   (no `SPBF`/`ASTO`/`SPEX` magic found in a full 152 MB decompressed scan). Positions are stored
-   as **binary tag–value pairs** in the ~5,170,562-byte C2 trailing data — there are **no ASCII
-   position strings** to key off.
-   - The `DaiyronW/tool` Python parser is for **Dynasty/RTG saves only**, not roster files.
-   - Likely candidate format: **TDB2** (used by Madden 21+ roster files).
-2. **Save-after-edit breaks official rosters.** Editing changes the compressed stream sizes; the
+1. **Save-after-edit breaks official rosters.** Editing changes the compressed stream sizes; the
    `FBCHUNKS` header offsets/checksums need to be updated on write (currently only the no-edit
    path round-trips byte-identically).
-
-### Next steps (from PROGRESS.md)
-1. Diff raw binary C2 data between a **generated roster** (has positions) vs a **community roster**
-   to find where positions live.
-2. Research the **TDB2** format spec.
-3. Check the `cfb27-dynasty-modding` repo for roster format docs.
+2. **Writing positions** (flip a `PPOS` byte and rebuild the flat section) is not yet wired into
+   the writer, though the read side is fully decoded.
+3. A second `BLBM` subtable (646 small gzip records, ~24–28 B decompressed) has a distinct
+   record layout that still fails to parse cleanly — not needed for positions, but unfinished.
 
 ---
 
@@ -83,8 +100,12 @@ community roster files.
 - Player records embed ASCII strings: `FullId`, first/last name, `Unique_*` / `Generic_*` IDs,
   body type, position, class year, team name, gear tokens.
 - Height is stored as a single byte right after the `A2 9B A3 00` marker (`heightByte = inches*2 - 12`).
-- Trailing **C2 data** (binary tag–value pairs, ~5 MB) is currently unparsed — believed to hold the
-  authoritative per-player fields including positions.
+- Trailing **C2 data** (binary tag–value pairs) is a **TDB2** table structure: it holds the
+  authoritative per-player attribute records in a `PLAY` subtable (see [Position encoding](#position-encoding-tdb2-play-subtable)).
+- TDB2 details: keys are 3 bytes six-bit packed + 1 type byte (0=int, 1=string, 3=nested field,
+  4=subtable, 5=keyed subtable, 10=float); numbers use a modified LEB128; gzip records are stored
+  uncompressed (`deflate stored` mode). Reference JS: `TDB2Parser.js`/`utilService.js`
+  (Madden 21+ tooling) — the C# port is `Roster/Tdb2.cs`.
 
 ---
 
@@ -114,12 +135,16 @@ Roster/
   Views/RosterEditorWindow.xaml(.cs)   # main WPF window + editing logic
   CFB27RosterReader.cs                 # FBCHUNKS deflate + gzip stream extraction + record parsing
   CFB27RosterWriter.cs                 # payload rebuild + gzip-to-size + deflate re-compression
+  Tdb2.cs                              # TDB2 table parser (six-bit keys, modified-LEB, gzip records)
+  Tdb2RosterExtractor.cs               # PLAY subtable extraction + PPOS -> position map (public API)
   FranchiseTable.cs / RecordCodec.cs   # FrTk table parser (Dynasty/RTG ONLY — port of DaiyronW/tool)
   PlayerVisualRecipe.cs                # player model (visual + gear fields)
   RosterData.cs                        # parsed roster container
   TeamMap.cs / On3TeamMap.cs / SidearmTeamMap.cs
   NCAAStatsScraper.cs / On3Scraper.cs / SidearmSportsScraper.cs
   ComplexionPresetMapper.cs / FaceTemplateMatcher.cs / HairColorMapper.cs
+Tools/Tdb2Dump/                        # console: dump all player positions from a roster file
+SampleOutput/play_records.txt          # extracted positions for the test roster (11,730 players)
 PROGRESS.md                            # running log of what's done / stuck on
 ```
 
@@ -130,10 +155,11 @@ PROGRESS.md                            # running log of what's done / stuck on
 
 ## How to help
 
-The two blockers above are the best places to contribute:
+The blockers above are the best places to contribute:
 
-- **Find the position encoding** in the C2 trailing data (compare generated vs community rosters,
-  or decode TDB2).
+- **Wire position editing into the writer** — `PPOS` lives in the TDB2 `PLAY` subtable; the read
+  side is fully decoded, so a position edit becomes "rewrite one PPOS value + rebuild the flat
+  section + fix FBCHUNKS stream sizes."
 - **Fix save-after-edit** so the `FBCHUNKS` headers are rebuilt for changed stream sizes.
 
 See [Current Status](#current-status) and `PROGRESS.md` for the full picture. Issues and PRs

@@ -16,6 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Tools\**\*.cs" />
+    <EmbeddedResource Remove="Tools\**" />
+    <None Remove="Tools\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="System.IO" />
   </ItemGroup>
 
