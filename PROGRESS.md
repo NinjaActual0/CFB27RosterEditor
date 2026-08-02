@@ -23,5 +23,4 @@ Figure out how to read position data from community roster files. Likely TDB2 fo
 
 ## Also Pending
 - Save-after-edit breaks official rosters (compressed size changes, FBCHUNKS headers need updating)
-- GitHub push: need `gh auth login --web -h github.com` in user's PowerShell
 - ComboBox dark-mode popup styling unreliable
