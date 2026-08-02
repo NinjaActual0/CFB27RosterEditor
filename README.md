@@ -104,7 +104,7 @@ community roster files.
   authoritative per-player attribute records in a `PLAY` subtable (see [Position encoding](#position-encoding-tdb2-play-subtable)).
 - TDB2 details: keys are 3 bytes six-bit packed + 1 type byte (0=int, 1=string, 3=nested field,
   4=subtable, 5=keyed subtable, 10=float); numbers use a modified LEB128; gzip records are stored
-  uncompressed (`deflate stored` mode). Reference JS: `TDB2Parser.js`/`utilService.js`
+  uncompressed (`deflate stored` mode). Reference JS: `Reference/TDB2Parser.js`/`utilService.js`
   (Madden 21+ tooling) — the C# port is `Roster/Tdb2.cs`.
 
 ---
@@ -145,6 +145,7 @@ Roster/
   ComplexionPresetMapper.cs / FaceTemplateMatcher.cs / HairColorMapper.cs
 Tools/Tdb2Dump/                        # console: dump all player positions from a roster file
 SampleOutput/play_records.txt          # extracted positions for the test roster (11,730 players)
+Reference/                             # Madden TDB2 JS reference implementation (TDB2Parser.js, etc.)
 PROGRESS.md                            # running log of what's done / stuck on
 ```
 

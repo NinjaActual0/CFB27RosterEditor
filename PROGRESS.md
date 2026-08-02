@@ -28,6 +28,24 @@ Standalone Windows tool (no FMT dependency) to edit CFB27 roster files, especial
 - Other `PLAY` fields: PEPS (asset name), PGID/POID (player id), PFNA/PLNA (name), PHTN
   (hometown), POVR (overall), PSPD/PSTR/PACC/… (ratings), PHGT/PWGT (height/weight ratings).
 
+## Pick up here (next session)
+- **Everything below this line was verified working on 2026-08-02** and committed as `9099ff1`.
+- TDB2 position read side is DONE: `Roster/Tdb2.cs` + `Roster/Tdb2RosterExtractor.cs`
+  (all 11,730 PLAY records parse, 0 errors). Reference Madden JS implementation is in
+  `Reference/` (TDB2Parser.js, utilService.js, etc.).
+- Resume commands:
+  1. `dotnet build -c Release` (WPF app) and `dotnet build -c Release` in
+     `Tools/Tdb2Dump` (console verifier).
+  2. `.\bin\Release\net10.0\Tdb2Dump.exe "<roster path>"` — should print `players parsed: 11730`.
+- Next task candidates (see "Still Open"):
+  - **Position writing**: locate the PPOS byte in the PLAY record and re-serialize — read side
+    is fully decoded; this closes the app's main feature.
+  - **FBCHUNKS stream-size fix** for save-after-edit.
+  - **646-record BLBM#2 subtable**: different record layout, keys like `BCCS`/`HBL]`
+    (428/646 still error). Probably a non-position record kind (stats/override).
+- Test roster: `C:\Users\Ninja\Documents\EA SPORTS College Football 27\saves\ROSTER-test`
+  (PLAY subtable at inner[8,314,829], 11,730 records).
+
 ## Still Open
 - **Save-after-edit breaks official rosters** (compressed size changes, FBCHUNKS headers need
   updating) — no-edit round-trip is byte-identical.
