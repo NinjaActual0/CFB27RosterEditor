@@ -10,7 +10,7 @@ Last updated: 2026-09-13
 - Node.js NOT installed anymore (was v24.19.0 for M27 converter — reinstall with `winget install OpenJS.NodeJS.LTS` only if converter is needed again; converter backed up in FMT repo `m27converter\`)
 - winget is the package manager (no chocolatey)
 
-## Projects — `C:\Users\Ninja\Source\Repos`
+## Projects — `E:\Game stuff\mods\Repos\Repos`
 
 ### 1. FMT.Madden26Plugin (PAUSED — waiting on PaulV)
 - **What**: FMT plugin for Madden 26/27/CFB27. Anti-cheat bypass, roster editor, face cloning, asset compiler.
@@ -98,7 +98,7 @@ Last updated: 2026-09-13
 
 ### MaddenSaveConverter — "Legion of Loom Madden Save Converter (MSC)" (ACTIVE — core engine DONE)
 - **What**: Standalone portable WPF tool. Pure C# port of the JS TDB2/FBCHUNKS pipeline (no Node dependency). Roadmap: 1) roster converter ✅ 2) draft class transfer 3) retro schedule tool 4) franchise transfer.
-- **Repo**: `C:\Users\Ninja\Source\Repos\MaddenSaveConverter` — **local only, NOT published** (user decision). Commit d7cc923 (2026-08-25).
+- **Repo**: `E:\Game stuff\mods\Repos\Repos\MaddenSaveConverter` — **local only, NOT published** (user decision). Commit d7cc923 (2026-08-25).
 - **Stack**: .NET 10, WPF, net10.0-windows; LOL branding (black #000000 / green #00A040/#00C048), logo in Assets/
 - **Build**: `dotnet build -c Release`; headless validation: `MaddenSaveConverter.exe --selftest` → **EXIT=0**
 - **Self-test**: `--selftest` (forward M26→M27) and `--selftest --reverse` (M27→M26), both **EXIT=0**. Forward: converts ROSTER-2019, verifies size 6291530 + len + CRC-32B, reloads cleanly, asserts SEMANTIC equality vs JS reference. Reverse: converts the verified output back to M26 format and spot-checks PGID 112 contract (PCON=4 PSA0=615 PSB0=75). Byte-identity NOT the bar (different deflate impls).

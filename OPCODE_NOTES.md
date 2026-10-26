@@ -181,7 +181,7 @@ Port M27 player bodies/heads/textures ("the looks") into M20, at scale (many/all
 - FMT host ships NO DotNetZip.dll / Ionic.* (verified recursively in both installs) — plugin provides its own copy.
 
 ### Repo / merge history
-- Local repo: `C:\Users\Ninja\Source\Repos\FMT.Madden26Plugin`. Remotes: `origin`/`fork` = DarthNinja0/FMT.Madden26Plugin, `upstream` = FMTDev/FMT.Madden26Plugin (added this session).
+- Local repo: `E:\Game stuff\mods\Repos\Repos\FMT.Madden26Plugin`. Remotes: `origin`/`fork` = DarthNinja0/FMT.Madden26Plugin, `upstream` = FMTDev/FMT.Madden26Plugin (added this session).
 - Upstream `main` = f8c1149 (2026-08-01, "Update with latest Nuget Packages and support latest FMT"). Local `main` had only merged through upstream 2026-07-03.
 - **Local-only commits NOT in upstream** (2026-07-08/09): the entire Roster tooling — `Roster/CyberfaceCloner.cs`, `RosterTool.cs`, `CFB27RosterReader.cs`, `CFB27RosterWriter.cs` (uses `Ionic.Zlib` → DotNetZip), `ComplexionPresetMapper.cs`, `FaceTemplateMatcher.cs`, `HairColorMapper.cs`, `TeamMap.cs`/`On3TeamMap.cs`/`SidearmTeamMap.cs`, scrapers (NCAAStats/On3/SidearmSports), `Roster/Views/*` (RosterEditorWindow, GenerateRosterDialog, BulkSwapDialog, AssignTeamDialog).
 - Commits this session: d843c33 (save uncommitted local work pre-merge), 9d605aa (merge upstream), e6b2bdf (ProDotNetZip swap), 031761d (README status). Pushed to fork: `31ca16b..e6b2bdf`, then `e6b2bdf..031761d`.
